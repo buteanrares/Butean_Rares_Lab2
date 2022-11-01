@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Butean_Rares_Lab2.Data;
 using Butean_Rares_Lab2.Models;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Butean_Rares_Lab2.Controllers
 {
@@ -20,9 +21,42 @@ namespace Butean_Rares_Lab2.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
-            return View(await _context.Books.Include(book => book.Author).ToListAsync());
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["TitleSortParm"] = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["PriceSortParm"] = sortOrder == "Price" ? "price_desc" : "Price";
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            ViewData["CurrentFilter"] = searchString;
+            var books = from b in _context.Books
+                        select b;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                books = books.Where(s => s.Title.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    books = books.OrderByDescending(b => b.Title);
+                    break;
+                case "Price":
+                    books = books.OrderBy(b => b.Price);
+                    break;
+                case "price_desc":
+                    books = books.OrderByDescending(b => b.Price);
+                    break;
+                default:
+                    books = books.OrderBy(b => b.Title); break;
+            }
+            int pageSize = 7;
+            return View(await PaginatedList<Book>.CreateAsync(books.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Books/Details/5
@@ -34,8 +68,8 @@ namespace Butean_Rares_Lab2.Controllers
             }
 
             var book = await _context.Books
-                .Include(book => book.Author)
-                .FirstOrDefaultAsync(m => m.ID == id);
+                .Include(b => b.Author)
+                .FirstOrDefaultAsync(m => m.BookId == id);
             if (book == null)
             {
                 return NotFound();
@@ -46,7 +80,14 @@ namespace Butean_Rares_Lab2.Controllers
 
         // GET: Books/Create
         public IActionResult Create()
+
         {
+            var authors = _context.Authors.Select(author => new
+            {
+                AuthorId = author.AuthorId,
+                FullName = author.FirstName + " " + author.LastName
+            });
+            ViewData["Authors"] = new SelectList(authors, "AuthorId", "FullName");
             return View();
         }
 
@@ -55,14 +96,15 @@ namespace Butean_Rares_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Title,Price")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Title,AuthorId,Price")] Book book)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(book);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
+            //if (ModelState.IsValid)
+            //{
+            _context.Add(book);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+            //}
+            ViewData["Authors"] = new SelectList(_context.Authors, "Id", "Id", book.AuthorId);
             return View(book);
         }
 
@@ -79,6 +121,7 @@ namespace Butean_Rares_Lab2.Controllers
             {
                 return NotFound();
             }
+            ViewData["AuthorId"] = new SelectList(_context.Authors, "Id", "Id", book.AuthorId);
             return View(book);
         }
 
@@ -87,9 +130,9 @@ namespace Butean_Rares_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Title,Price")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,Price")] Book book)
         {
-            if (id != book.ID)
+            if (id != book.BookId)
             {
                 return NotFound();
             }
@@ -103,7 +146,7 @@ namespace Butean_Rares_Lab2.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookExists(book.ID))
+                    if (!BookExists(book.BookId))
                     {
                         return NotFound();
                     }
@@ -114,6 +157,7 @@ namespace Butean_Rares_Lab2.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["AuthorId"] = new SelectList(_context.Authors, "Id", "Id", book.AuthorId);
             return View(book);
         }
 
@@ -126,7 +170,8 @@ namespace Butean_Rares_Lab2.Controllers
             }
 
             var book = await _context.Books
-                .FirstOrDefaultAsync(m => m.ID == id);
+                .Include(b => b.Author)
+                .FirstOrDefaultAsync(m => m.BookId == id);
             if (book == null)
             {
                 return NotFound();
@@ -156,7 +201,7 @@ namespace Butean_Rares_Lab2.Controllers
 
         private bool BookExists(int id)
         {
-            return _context.Books.Any(e => e.ID == id);
+            return _context.Books.Any(e => e.BookId == id);
         }
     }
 }

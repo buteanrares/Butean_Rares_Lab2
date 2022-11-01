@@ -16,6 +16,16 @@ namespace Butean_Rares_Lab2.Data
                     context.Books.Remove(entity);
                 }
 
+                foreach(var entity in context.Authors)
+                {
+                    context.Authors.Remove(entity);
+                }
+
+                foreach(var entity in context.Customers)
+                {
+                    context.Customers.Remove(entity);
+                }
+
                 var authors = new List<Author>() {
                     new Author
                     {
