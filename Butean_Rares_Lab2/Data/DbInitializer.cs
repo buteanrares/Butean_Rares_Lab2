@@ -141,7 +141,7 @@ namespace Butean_Rares_Lab2.Data
                         //new PublishedBook {BookId = context.Books.Single(c => c.Title == "Baltagul" ).BookId,PublisherId = context.Publishers.Single(i => i.PublisherName =="Nemira").ID},
                         //new PublishedBook {BookId = context.Books.Single(c => c.Title == "Fata de hartie" ).BookId,PublisherId = context.Publishers.Single(i => i.PublisherName == "Paralela 45").ID},
                         //new PublishedBook {BookId = context.Books.Single(c => c.Title == "Panza de paianjen" ).BookId,PublisherId = context.Publishers.Single(i => i.PublisherName == "Paralela 45").ID},
-                        new PublishedBook {BookId = context.Books.Single(c => c.Title == "De veghe in lanul desecara" ).BookId,PublisherId = context.Publishers.Single(i => i.PublisherName == "Paralela 45").ID}
+                        new PublishedBook {BookId = context.Books.Single(c => c.Title == "De veghe in lanul desecara" ).BookId,PublisherId = context.Publishers.Single(i => i.PublisherName == "Paralela 45").PublisherId}
                     });
                     context.SaveChanges();
                 }

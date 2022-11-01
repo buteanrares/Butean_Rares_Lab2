@@ -38,7 +38,7 @@ namespace Butean_Rares_Lab2.Controllers
             {
                 ViewData["PublisherID"] = id.Value;
                 Publisher publisher = _viewModel.Publishers.Where(
-                i => i.ID == id.Value).Single();
+                i => i.PublisherId == id.Value).Single();
                 _viewModel.Books = publisher.PublishedBooks.Select(s => s.Book);
             }
             if (bookID != null)
@@ -65,7 +65,7 @@ namespace Butean_Rares_Lab2.Controllers
             }
 
             var publisher = await _context.Publishers
-                .FirstOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.PublisherId == id);
             if (publisher == null)
             {
                 return NotFound();
@@ -119,7 +119,7 @@ namespace Butean_Rares_Lab2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ID,PublisherName,Adress")] Publisher publisher)
         {
-            if (id != publisher.ID)
+            if (id != publisher.PublisherId)
             {
                 return NotFound();
             }
@@ -133,7 +133,7 @@ namespace Butean_Rares_Lab2.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!PublisherExists(publisher.ID))
+                    if (!PublisherExists(publisher.PublisherId))
                     {
                         return NotFound();
                     }
@@ -156,7 +156,7 @@ namespace Butean_Rares_Lab2.Controllers
             }
 
             var publisher = await _context.Publishers
-                .FirstOrDefaultAsync(m => m.ID == id);
+                .FirstOrDefaultAsync(m => m.PublisherId == id);
             if (publisher == null)
             {
                 return NotFound();
@@ -186,7 +186,7 @@ namespace Butean_Rares_Lab2.Controllers
 
         private bool PublisherExists(int id)
         {
-            return _context.Publishers.Any(e => e.ID == id);
+            return _context.Publishers.Any(e => e.PublisherId == id);
         }
     }
 }

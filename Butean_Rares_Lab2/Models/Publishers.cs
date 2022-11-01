@@ -5,7 +5,7 @@ namespace Butean_Rares_Lab2.Models
 {
     public class Publisher
     {
-        public int ID { get; set; }
+        public int PublisherId { get; set; }
         [Required]
         [Display(Name = "Publisher Name")]
         [StringLength(50)]

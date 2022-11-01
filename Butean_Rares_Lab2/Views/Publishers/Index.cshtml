@@ -19,7 +19,7 @@
         @foreach (var item in Model.Publishers)
         {
             string selectedRow = "";
-            if (item.ID == (int?)ViewData["PublisherID"])
+            if (item.PublisherId == (int?)ViewData["PublisherID"])
             {
                 selectedRow = "success";
             }
@@ -40,10 +40,10 @@
                     }
                 </td>
                 <td>
-                    <a asp-action="Index" asp-route-id="@item.ID">Select</a> |
-                    <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
+                    <a asp-action="Index" asp-route-id="@item.PublisherId">Select</a> |
+                    <a asp-action="Edit" asp-route-id="@item.PublisherId">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.PublisherId">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.PublisherId">Delete</a>
                 </td>
             </tr>
         }
