@@ -99,52 +99,107 @@ namespace Butean_Rares_Lab2.Controllers
         // GET: Publishers/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Publishers == null)
+            if (id == null)
             {
                 return NotFound();
             }
-
-            var publisher = await _context.Publishers.FindAsync(id);
+            var publisher = await _context.Publishers
+            .Include(i => i.PublishedBooks).ThenInclude(i => i.Book)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.PublisherId == id);
             if (publisher == null)
             {
                 return NotFound();
             }
+            PopulatePublishedBookData(publisher);
             return View(publisher);
+
         }
+        private void PopulatePublishedBookData(Publisher publisher)
+        {
+            var allBooks = _context.Books;
+            var publisherBooks = new HashSet<int>(publisher.PublishedBooks.Select(c => c.BookId));
+            var viewModel = new List<PublishedBookData>();
+            foreach (var book in allBooks)
+            {
+                viewModel.Add(new PublishedBookData
+                {
+                    BookID = book.BookId,
+                    Title = book.Title,
+                    IsPublished = publisherBooks.Contains(book.BookId)
+                });
+            }
+            ViewData["Books"] = viewModel;
+        }
+
 
         // POST: Publishers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,PublisherName,Adress")] Publisher publisher)
+        public async Task<IActionResult> Edit(int? id, string[] selectedBooks)
         {
-            if (id != publisher.PublisherId)
+            if (id == null)
             {
                 return NotFound();
             }
-
-            if (ModelState.IsValid)
+            var publisherToUpdate = await _context.Publishers
+            .Include(i => i.PublishedBooks)
+            .ThenInclude(i => i.Book)
+            .FirstOrDefaultAsync(m => m.PublisherId == id);
+            if (await TryUpdateModelAsync<Publisher>(publisherToUpdate, "", publisher => publisher.PublisherName, publisher => publisher.Adress, publisher => publisher.PublishedBooks))
             {
+                UpdatePublishedBooks(selectedBooks, publisherToUpdate);
                 try
                 {
-                    _context.Update(publisher);
                     await _context.SaveChangesAsync();
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException /* ex */)
                 {
-                    if (!PublisherExists(publisher.PublisherId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
+                    ModelState.AddModelError("", "Unable to save changes. " +
+                    "Try again, and if the problem persists, ");
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(publisher);
+            UpdatePublishedBooks(selectedBooks, publisherToUpdate);
+            PopulatePublishedBookData(publisherToUpdate);
+            return View(publisherToUpdate);
+        }
+        private void UpdatePublishedBooks(string[] selectedBooks, Publisher publisherToUpdate)
+        {
+            if (selectedBooks == null)
+            {
+                publisherToUpdate.PublishedBooks = new List<PublishedBook>();
+                return;
+            }
+            var selectedBooksHS = new HashSet<string>(selectedBooks);
+            var publishedBooks = new HashSet<int>
+            (publisherToUpdate.PublishedBooks.Select(c => c.Book.BookId));
+            foreach (var book in _context.Books)
+            {
+                if (selectedBooksHS.Contains(book.BookId.ToString()))
+                {
+                    if (!publishedBooks.Contains(book.BookId))
+                    {
+                        publisherToUpdate.PublishedBooks.Add(new PublishedBook
+                        {
+                            PublisherId = publisherToUpdate.PublisherId,
+                            BookId = book.BookId
+                        });
+                    }
+                }
+                else
+                {
+                    if (publishedBooks.Contains(book.BookId))
+                    {
+                        PublishedBook? bookToRemove = publisherToUpdate.PublishedBooks.FirstOrDefault(i => i.BookId == book.BookId);
+                        if (bookToRemove != null)
+                            _context.Remove(bookToRemove);
+                    }
+                }
+            }
         }
 
         // GET: Publishers/Delete/5
