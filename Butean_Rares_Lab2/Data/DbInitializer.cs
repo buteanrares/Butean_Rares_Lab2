@@ -10,6 +10,7 @@ namespace Butean_Rares_Lab2.Data
 {
     public static class DbInitializer
     {
+        //test
         public static void Initialize(IServiceProvider serviceProvider)
         {
             using (var context = new LibraryContext(serviceProvider.GetRequiredService<DbContextOptions<LibraryContext>>()))
